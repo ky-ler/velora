@@ -20,8 +20,8 @@ export const GetTaskActivityQueryParams = zod.object({
 });
 
 export const GetTaskActivityResponse = zod.object({
-  totalPages: zod.number().optional(),
   totalElements: zod.number().optional(),
+  totalPages: zod.number().optional(),
   size: zod.number().optional(),
   content: zod
     .array(
@@ -44,9 +44,9 @@ export const GetTaskActivityResponse = zod.object({
   pageable: zod
     .object({
       offset: zod.number().optional(),
+      paged: zod.boolean().optional(),
       pageNumber: zod.number().optional(),
       pageSize: zod.number().optional(),
-      paged: zod.boolean().optional(),
       sort: zod
         .object({
           empty: zod.boolean().optional(),
