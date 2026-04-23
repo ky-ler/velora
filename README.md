@@ -1,81 +1,84 @@
-# Kanban
+# Velora
 
-A full-stack Kanban board application featuring real-time collaboration, drag-and-drop task management, and role-based access control. Built with Spring Boot and React.
+Velora is a full-stack project management app with Kanban-style boards, live collaboration, and role-based access controls.
 
-## Features
+## Highlights
 
-- **Multi-Board Management** - Create and manage multiple boards with customizable columns
-- **Real-Time Collaboration** - WebSocket synchronization keeps all users in sync
-- **Drag & Drop Interface** - Smooth task management with optimistic UI updates
-- **Task Management** - Full CRUD with assignments, comments, labels, due dates, and activity tracking
-- **Board Invitations** - Secure invite links with role-based access control (Creator, Admin, Member)
-- **OAuth2 Authentication** - Auth0 integration with JWT validation
-- **Type-Safe API** - Auto-generated TypeScript client from OpenAPI specification
+- Multi-board workspace with customizable columns
+- Drag-and-drop task flow with real-time board updates
+- Tasks with assignees, labels, due dates, comments, and activity history
+- Checklist items and board/task activity feeds
+- Invite links and collaborator role management
+- Auth0 integration for authentication and authorization
 
 ## Tech Stack
 
-**Backend:** Spring Boot 3.5, Java 21, PostgreSQL, Spring Security OAuth2, Spring Data JPA, Flyway
+| Layer  | Technologies                                                                                                       |
+| ------ | ------------------------------------------------------------------------------------------------------------------ |
+| API    | Java 25, Spring Boot, Spring Security OAuth2 Resource Server, Spring Data JPA, Flyway, PostgreSQL, WebSocket/STOMP |
+| Client | React 19, TypeScript, Vite, TanStack Router/Query, Tailwind CSS, shadcn/ui, Auth0 React                            |
+| Infra  | Docker Compose, Caddy, GitHub Actions, GHCR                                                                        |
 
-**Frontend:** React 19, TypeScript, Vite, TanStack Router/Query/Form, Tailwind CSS 4, shadcn/ui, Auth0 React
+## Repository Layout
 
-## Prerequisites
+```text
+api/                    Spring Boot API
+client/                 React + Vite frontend
+docker-compose.yml      Local Postgres service
+docker-compose.prod.yml Production stack (Postgres + API + Caddy)
+Caddyfile               Production reverse proxy config
+run-api.sh              Local helper (loads .env, starts DB + API)
+```
 
-- Java 21
-- Node.js 20+
-- Docker (or PostgreSQL 16+)
-- [Auth0 Account](https://auth0.com/)
+## Quickstart (Local)
 
-## Quick Start
+### Prerequisites
 
-### 1. Database Setup
+- Java 25
+- Node.js 24+ and npm
+- Docker
+- Auth0 tenant (SPA app + API)
 
-Start PostgreSQL via Docker Compose:
+### 1) Configure root environment
+
+```bash
+cp .env.dev.example .env
+```
+
+Edit `.env` for your environment (especially Auth0 and CORS values).
+
+### 2) Start PostgreSQL
 
 ```bash
 docker compose up -d
 ```
 
-Update `api/src/main/resources/application.yml` if you changed credentials in `docker-compose.yml`.
+### 3) Configure client environment
 
-### 2. Auth0 Configuration
-
-Create an Auth0 application (Single Page Application) and API with identifier.
-
-**Backend** (`api/src/main/resources/application.yml`):
-
-```yaml
-spring:
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: https://your-tenant.auth0.com/
-          audiences: your-api-identifier
+```bash
+cp client/.env.example client/.env
 ```
 
-**Frontend** (`client/.env`):
+Edit `client/.env` with your Auth0 values and any client URL overrides.
 
-```env
-VITE_API_URL=http://localhost:8080/api
-VITE_OPENAPI_YAML_URL=http://localhost:8080/api-docs.yaml
-VITE_AUTH0_DOMAIN=your-tenant.auth0.com
-VITE_AUTH0_CLIENT_ID=your-client-id
-VITE_AUTH0_AUDIENCE=your-api-identifier
-VITE_AUTH0_CALLBACK_URL=http://localhost:5173/callback
-```
+### 4) Run the API (dev profile)
 
-### 3. Run the Application
-
-**Backend:**
+Option A (manual):
 
 ```bash
 cd api
-./mvnw spring-boot:run
+DB_USERNAME=your_db_username DB_PASSWORD=your_db_password ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
-API runs on `http://localhost:8080`
+Option B (helper script from repo root):
 
-**Frontend:**
+```bash
+./run-api.sh
+```
+
+This script expects a root `.env` file (used for DB and API env values).
+
+### 5) Run the client
 
 ```bash
 cd client
@@ -83,15 +86,36 @@ npm install
 npm run dev
 ```
 
-Client runs on `http://localhost:5173`
+Client: `http://localhost:5173`  
+API: `http://localhost:8080`
 
-## API Documentation
+## Useful Commands
 
-When the backend is running:
+| Task                           | Command                                   |
+| ------------------------------ | ----------------------------------------- |
+| API tests (unit + integration) | `cd api && ./mvnw verify -B`              |
+| API package (skip tests)       | `cd api && ./mvnw package -DskipTests -B` |
+| Client lint                    | `cd client && npm run lint`               |
+| Client build                   | `cd client && npm run build`              |
+| Regenerate API client          | `cd client && npm run generate:api`       |
 
-- **Swagger UI:** http://localhost:8080/swagger-ui.html
-- **OpenAPI Docs:** http://localhost:8080/api-docs
+## API Docs
+
+When the API is running with docs enabled:
+
+- Swagger UI: `http://localhost:8080/swagger-ui.html`
+- OpenAPI JSON: `http://localhost:8080/api-docs`
+- OpenAPI YAML: `http://localhost:8080/api-docs.yaml`
+
+## Deployment Overview
+
+- `docker-compose.prod.yml` runs PostgreSQL, the API, and Caddy.
+- `Caddyfile` proxies `${DOMAIN}` traffic to `api:8080`.
+- Use `.env.production.example` as the deployment environment template.
+- GitHub Actions:
+  - `ci.yml`: API verify + client lint/build on push/PR to `main`
+  - `deploy.yml`: on successful CI, build/push API image and deploy on the configured droplet
 
 ## License
 
-GNU Affero General Public License v3.0 - see [LICENSE](LICENSE) file for details.
+Licensed under the GNU Affero General Public License v3.0. See [LICENSE](LICENSE).
