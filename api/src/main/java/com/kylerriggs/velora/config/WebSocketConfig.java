@@ -10,10 +10,6 @@ import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBr
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
-/**
- * WebSocket configuration using STOMP protocol for real-time board updates. Replaces SSE to avoid
- * connection leak issues.
- */
 @Configuration
 @EnableWebSocketMessageBroker
 @RequiredArgsConstructor
@@ -23,9 +19,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(@NonNull MessageBrokerRegistry config) {
-        // Enable simple in-memory broker for /topic destinations
         config.enableSimpleBroker("/topic");
-        // Prefix for messages from clients to server (if needed for bidirectional)
         config.setApplicationDestinationPrefixes("/app");
     }
 
@@ -33,16 +27,13 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void registerStompEndpoints(@NonNull StompEndpointRegistry registry) {
         String[] origins = securityProperties.getCorsAllowedOrigins().toArray(String[]::new);
 
-        // Register native WebSocket endpoint (for modern browsers)
         registry.addEndpoint("/ws").setAllowedOriginPatterns(origins);
 
-        // Register SockJS fallback endpoint (for older browsers)
         registry.addEndpoint("/ws-sockjs").setAllowedOriginPatterns(origins).withSockJS();
     }
 
     @Override
     public void configureClientInboundChannel(@NonNull ChannelRegistration registration) {
-        // Add auth interceptor to validate JWT on STOMP CONNECT
         registration.interceptors(webSocketAuthInterceptor);
     }
 }
